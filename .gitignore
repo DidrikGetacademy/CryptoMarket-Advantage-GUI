@@ -1,2 +1,15 @@
 /env/
 /venv/
+# Ignorer Python cache-filer
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorer virtuelle miljøer
+venv/
+.env/
+
+# Ignorer loggfiler og midlertidige filer
+*.log
+*.tmp
