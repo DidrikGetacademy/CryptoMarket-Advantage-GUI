@@ -13,3 +13,5 @@ venv/
 # Ignorer loggfiler og midlertidige filer
 *.log
 *.tmp
+
+Agent/local_model/
