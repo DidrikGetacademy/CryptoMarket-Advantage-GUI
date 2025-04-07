@@ -1,12 +1,9 @@
 import customtkinter as ctk
 import threading
-from smolagents import CodeAgent, HfApiModel, FinalAnswerTool,Tool, DuckDuckGoSearchTool, UserInputTool, GoogleSearchTool, VisitWebpageTool,PythonInterpreterTool
+from smolagents import CodeAgent, HfApiModel, FinalAnswerTool,Tool, DuckDuckGoSearchTool, UserInputTool, GoogleSearchTool, VisitWebpageTool,PythonInterpreterTool,TransformersModel
 import yaml
-
-
-
-
-
+from Telegram.Telegram_utils import run_telegram_bot_in_thread,client,load_Chat_group_ids
+import threading
 
 
 
@@ -40,6 +37,10 @@ class CryptoTrackerApp(ctk.CTk):
         self.Telegram_button = ctk.CTkButton(self.sidebar, text="Telegram Tracker", command=self.Telegram_Tracker_System)
         self.Telegram_button.pack(pady=15, padx=10, fill="x")
 
+
+        self.Twitter_button = ctk.CTkButton(self.sidebar, text="Twitter Tracker", command=self.show_Twitter_Tracking_system)
+        self.Twitter_button.pack(pady=15, padx=10, fill="x")
+
         self.BotConfig_BTN = ctk.CTkButton(self.sidebar, text="Bot's configuration", command=self.show_bot_configuration)
         self.BotConfig_BTN.pack(pady=15, padx=10, fill="x")
 
@@ -57,6 +58,45 @@ class CryptoTrackerApp(ctk.CTk):
 
         self.loading_label  = ctk.CTkLabel(self.content_frame,text="")
         self.is_processing = False
+
+  
+
+
+    def show_Twitter_Tracking_system(self):
+        self.update_content("Telegram Tracker")
+        Twitter_Tracker_Frame = ctk.CTkFrame(self.content_frame, corner_radius=10)
+        Twitter_Tracker_Frame.pack(side="top", expand=True, fill="both", padx=15, pady=15)
+
+        Live_Twitter_Alert_Frame = ctk.CTkFrame(Twitter_Tracker_Frame, corner_radius=10)
+        Live_Twitter_Alert_Frame.pack(side="left", expand=True, fill="both", padx=15, pady=15)
+
+        Telegram_Title = ctk.CTkLabel(Live_Twitter_Alert_Frame, text="Live Alert Notifications", font=("Arial", 18, "bold"))
+        Telegram_Title.pack(pady=10)
+
+        large_font = ctk.CTkFont(family="Arial", size=18) 
+        self.chat_display_Twitter = ctk.CTkTextbox(
+        Live_Twitter_Alert_Frame,
+        wrap="word",
+        state="disabled",
+        text_color="white",
+        font=large_font
+        )
+        self.chat_display_Twitter.pack(expand=True, fill="both", pady=10, padx=10)
+
+
+        Twitter_Config_frame = ctk.CTkFrame(Twitter_Tracker_Frame, corner_radius=10)
+        Twitter_Config_frame.pack(side="left", expand=True, fill="both", padx=15, pady=15)
+
+        Twitter_Title = ctk.CTkLabel(Twitter_Config_frame, text="Twitter Configuration", font=("Arial", 18, "bold"))
+        Twitter_Title.pack(pady=10)
+
+        self.Twitter_Start_Tracking_BTN = ctk.CTkButton(
+            Twitter_Config_frame, 
+            text="Start Telegram Tracker", 
+            command=None
+        )
+        self.Twitter_Start_Tracking_BTN.pack(pady=10)
+
 
 
     def show_wallet_Tracking_System(self):
@@ -91,13 +131,118 @@ class CryptoTrackerApp(ctk.CTk):
         Live_Alert_Frame = ctk.CTkFrame(Telegram_Tracker_Frame, corner_radius=10)
         Live_Alert_Frame.pack(side="left", expand=True, fill="both", padx=15, pady=15)
 
+        Telegram_Title = ctk.CTkLabel(Live_Alert_Frame, text="Live Alert Notifications", font=("Arial", 18, "bold"))
+        Telegram_Title.pack(pady=10)
+
+        large_font = ctk.CTkFont(family="Arial", size=18) 
+        self.chat_display_telegram = ctk.CTkTextbox(
+        Live_Alert_Frame,
+        wrap="word",
+        state="disabled",
+        text_color="white",
+        font=large_font
+        )
+        self.chat_display_telegram.pack(expand=True, fill="both", pady=10, padx=10)
+
 
         Telegram_Config_frame = ctk.CTkFrame(Telegram_Tracker_Frame, corner_radius=10)
         Telegram_Config_frame.pack(side="left", expand=True, fill="both", padx=15, pady=15)
 
+        Telegram_Title = ctk.CTkLabel(Telegram_Config_frame, text="Telegram Configurations", font=("Arial", 18, "bold"))
+        Telegram_Title.pack(pady=10)
+
+        self.Telegram_Start_Tracking_BTN = ctk.CTkButton(
+            Telegram_Config_frame, 
+            text="Start Telegram Tracker", 
+            command=self.start_telegram_tracking
+        )
+        self.Telegram_Start_Tracking_BTN.pack(pady=10)
+
+        self.Telegram_STOP_Tracking_BTN = ctk.CTkButton(
+            Telegram_Config_frame, 
+            text="Stop Tracker", 
+            command=self.start_telegram_tracking,
+            fg_color="red"
+        )
+        self.Telegram_STOP_Tracking_BTN.pack(pady=10)
+        self.Telegram_STOP_Tracking_BTN.pack_forget() 
+
+        self.fetch_Channel_ids_BTN = ctk.CTkButton(
+            Telegram_Config_frame,
+            text="Fetch Telegram Channel id's",
+            command=self.fetch_telegrams_ids,
+        )
+        self.fetch_Channel_ids_BTN.pack(pady=10)
+
+        self.Telegram_ids_textbox = ctk.CTkTextbox(
+            Telegram_Config_frame,
+            wrap="word",
+            state="disabled",
+            text_color="white",
+            font=large_font,
+            height=500,
+            width=500
+        )
+        self.Telegram_ids_textbox.pack(side="right",pady=10, padx=10)
+
+        self.add_group_tracking_BTN = ctk.CTkButton(
+            Telegram_Config_frame,
+            text="Add group to tracking List",
+            command=None,
+        )
+        self.add_group_tracking_BTN.pack(pady=10)
+
+        self.Group_Tracking_Textbox = ctk.CTkTextbox(
+            Telegram_Config_frame,
+            wrap="word",
+            state="disabled",
+            text_color="white",
+            font=large_font,
+            height=500,
+            width=500
+        )
+        self.Group_Tracking_Textbox.pack(side="right", pady=10, padx=10)
+
+
+
+    def fetch_telegrams_ids(self):
+        dialog_data = load_Chat_group_ids()
+        dialog_info = "\n\n".join([f"Name: {dialog[0]}\nID: {dialog[1]}" for dialog in dialog_data])
+        self.update_dialog_display(dialog_info)
+
+
     
+    def update_dialog_display(self,dialog_info):
+        self.Telegram_ids_textbox.configure(state="normal")
+        self.Telegram_ids_textbox.delete("1.0", "end")
+        self.Telegram_ids_textbox.insert("end",dialog_info)
+        self.Telegram_ids_textbox.configure(state="disabled")
+            
+
+            
+
+    def stop_telegram_tracking(self):
+        """Stops the telegram bot.."""
+        if hasattr(self, "bot_thread") and self.bot_thread.is_alive():
+            print("Stopping telegram bot...")
+            self.Telegram_STOP_Tracking_BTN.pack_forget()
+            self.Telegram_Start_Tracking_BTN.configure(state="normal")
+            client.disconnect()
 
 
+    def start_telegram_tracking(self):
+        self.Telegram_Start_Tracking_BTN.configure(state="disabled")
+        self.Telegram_STOP_Tracking_BTN.pack(pady=10)
+        self.bot_thread = threading.Thread(target=run_telegram_bot_in_thread, args=(self,),daemon=True)
+        self.bot_thread.start()
+
+
+    def update_chat_telegram_alert(self, message):
+        """Update chat display with new message"""
+        self.chat_display_telegram.configure(state="normal")
+        self.chat_display_telegram.insert("end", message + "\n")
+        self.chat_display_telegram.configure(state="disabled")
+        self.chat_display_telegram.see("end")
 
 
 
@@ -118,7 +263,7 @@ class CryptoTrackerApp(ctk.CTk):
         chat_frame.pack(side="left", expand=True, fill="both", padx=10, pady=10)
 
         # CHAT DISPLAY (Read-Only)
-        large_font = ctk.CTkFont(family="Arial", size=18)  
+        large_font = ctk.CTkFont(family="Arial", size=18) 
         self.chat_display = ctk.CTkTextbox(
         chat_frame,
         wrap="word",
@@ -179,7 +324,6 @@ class CryptoTrackerApp(ctk.CTk):
         ).start()
 
 
-        #Clear input field
 
     def update_chat(self, message):
         """Update chat display with new message"""
@@ -198,8 +342,10 @@ class CryptoTrackerApp(ctk.CTk):
        
             final_answer = FinalAnswerTool()
             model = HfApiModel("Qwen/Qwen2.5-Coder-32B-Instruct")
+            #model = TransformersModel("./Agent/local_model")
+  
 
-            with open("./Agent/prompts.yaml", 'r') as stream:
+            with open(r"C:\Users\didri\Desktop\Programmering\TradingBots Program\Agent\prompts.yaml", 'r') as stream:
                 prompt_templates = yaml.safe_load(stream)
     
             image_generation_tool = Tool.from_space(
@@ -209,10 +355,10 @@ class CryptoTrackerApp(ctk.CTk):
             )
             agent = CodeAgent(
                     model=model,
-                    tools=[final_answer, image_generation_tool, DuckDuckGoSearchTool(), UserInputTool(),GoogleSearchTool(),VisitWebpageTool(),PythonInterpreterTool()], 
+                    tools=[final_answer, image_generation_tool], 
                     max_steps=6,
                     verbosity_level=1,
-                    prompt_templates=prompt_templates 
+                    prompt_templates=prompt_templates,
                 )
             
             Response = agent.run(user_message)
