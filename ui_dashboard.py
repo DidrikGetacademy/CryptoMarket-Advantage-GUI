@@ -355,9 +355,9 @@ class CryptoTrackerApp(ctk.CTk):
             )
             agent = CodeAgent(
                     model=model,
-                    tools=[final_answer, image_generation_tool], 
+                    tools=[final_answer], 
                     max_steps=6,
-                    verbosity_level=1,
+                    verbosity_level=4,
                     prompt_templates=prompt_templates,
                 )
             

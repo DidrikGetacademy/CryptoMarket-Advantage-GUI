@@ -310,3 +310,13 @@
   "report": |-
     Here is the final answer from your managed agent 'LearnReflect CryptoMarket Agent':
     {{final_answer}}
+
+"final_answer":
+  "pre_messages": |-
+    Here is the generated video metadata based on your content and trending analysis:
+
+  "final_answer": |-
+   the final answer to the users question
+
+  "post_messages": |-
+    This metadata has been tailored based on current video trends and content optimization techniques. Good luck with your upload!
